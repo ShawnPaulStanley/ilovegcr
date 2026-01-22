@@ -8,7 +8,8 @@
     "downloads",
     "scripting",
     "activeTab",
-    "storage"
+    "storage",
+    "webRequest"
   ],
   
   "host_permissions": [

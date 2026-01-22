@@ -96,10 +96,13 @@ function downloadFile(attachment, folderName) {
       },
       (downloadId) => {
         if (chrome.runtime.lastError) {
+          console.error(`[ilovegcr] Download error: ${chrome.runtime.lastError.message}`);
           reject(new Error(chrome.runtime.lastError.message));
         } else if (downloadId === undefined) {
-          reject(new Error("Download failed - no download ID returned"));
+          console.error(`[ilovegcr] Download blocked or failed - check extension permissions`);
+          reject(new Error("Download failed - check if extension has download permission in Opera GX"));
         } else {
+          console.log(`[ilovegcr] Download started with ID: ${downloadId}`);
           resolve(downloadId);
         }
       }
