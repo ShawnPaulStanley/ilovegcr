@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "iloveGCR",
+  "version": "1.3.0",
+  "description": "Download all attachments from Google Classroom assignment pages with one click.",
+  
+  "permissions": [
+    "downloads",
+    "scripting",
+    "activeTab"
+  ],
+  
+  "host_permissions": [
+    "https://classroom.google.com/*",
+    "https://drive.google.com/*",
+    "https://docs.google.com/*"
+  ],
+  
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "iloveGCR - Classroom Downloader",
+    "default_icon": {
+      "16": "icon128.png",
+      "32": "icon128.png",
+      "48": "icon128.png",
+      "128": "icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icon128.png",
+    "32": "icon128.png",
+    "48": "icon128.png",
+    "128": "icon128.png"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["https://classroom.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "type": "module"
+    }
+  ]
+}
