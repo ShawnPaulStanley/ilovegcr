@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Check if on Classroom
   if (!tab.url || !tab.url.includes('classroom.google.com')) {
     showNotClassroom();
+    loadDownloadPath();
     return;
   }
   
@@ -32,6 +33,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('deselectAll').addEventListener('click', deselectAll);
   document.getElementById('refreshBtn').addEventListener('click', () => refreshPage(tab.id));
   document.getElementById('downloadBtn').addEventListener('click', downloadSelected);
+  document.getElementById('savePathBtn').addEventListener('click', saveDownloadPath);
+  
+  // Load current download path
+  loadDownloadPath();
 });
 
 // Store tabId globally for refresh
@@ -294,4 +299,49 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+/**
+ * Load and display the current download path
+ */
+async function loadDownloadPath() {
+  try {
+    const response = await chrome.runtime.sendMessage({ action: "GET_DOWNLOAD_PATH" });
+    const pathInput = document.getElementById('downloadPath');
+    if (pathInput) {
+      pathInput.value = response.path || "Classroom";
+    }
+  } catch (error) {
+    console.error("Error loading download path:", error);
+  }
+}
+
+/**
+ * Save the new download path
+ */
+async function saveDownloadPath() {
+  const pathInput = document.getElementById('downloadPath');
+  const statusDiv = document.getElementById('pathStatus');
+  const newPath = pathInput.value.trim();
+  
+  if (!newPath) {
+    statusDiv.textContent = "Path cannot be empty";
+    statusDiv.style.color = "#c5221f";
+    return;
+  }
+  
+  try {
+    await chrome.runtime.sendMessage({ 
+      action: "SET_DOWNLOAD_PATH", 
+      path: newPath 
+    });
+    statusDiv.textContent = "✓ Path saved successfully";
+    statusDiv.style.color = "#137333";
+    setTimeout(() => {
+      statusDiv.textContent = "";
+    }, 3000);
+  } catch (error) {
+    console.error("Error saving download path:", error);
+    statusDiv.textContent = "Error saving path";
+    statusDiv.style.color = "#c5221f";
+  }
 }

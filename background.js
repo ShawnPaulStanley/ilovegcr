@@ -20,6 +20,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
     // Return true to indicate async response
     return true;
+  } else if (message.action === "GET_DOWNLOAD_PATH") {
+    getDownloadPath().then((path) => sendResponse({ path }));
+    return true;
+  } else if (message.action === "SET_DOWNLOAD_PATH") {
+    setDownloadPath(message.path).then(() => sendResponse({ success: true }));
+    return true;
   }
 });
 
@@ -50,12 +56,13 @@ function generateTimestamp() {
  */
 async function handleDownloadRequest(attachments, assignmentName) {
   const results = [];
+  const downloadPath = await getDownloadPath();
   const folderName = sanitizeFolderName(assignmentName || "Classroom_Downloads");
   const timestamp = generateTimestamp();
   const sessionFolder = `${folderName}_${timestamp}`;
   
   console.log(`[ilovegcr] Starting download of ${attachments.length} files`);
-  console.log(`[ilovegcr] Saving to folder: Classroom/${sessionFolder}/`);
+  console.log(`[ilovegcr] Saving to folder: ${downloadPath}/${sessionFolder}/`);
   
   for (const attachment of attachments) {
     try {
@@ -77,10 +84,11 @@ async function handleDownloadRequest(attachments, assignmentName) {
  * @param {string} folderName - Sanitized folder name
  * @returns {Promise<number>} - Download ID
  */
-function downloadFile(attachment, folderName) {
-  return new Promise((resolve, reject) => {
+async function downloadFile(attachment, folderName) {
+  return new Promise(async (resolve, reject) => {
     const sanitizedFilename = sanitizeFilename(attachment.filename, attachment.url);
-    const fullPath = `Classroom/${folderName}/${sanitizedFilename}`;
+    const downloadPath = await getDownloadPath();
+    const fullPath = `${downloadPath}/${folderName}/${sanitizedFilename}`;
     
     // Convert Google Drive/Docs URLs to direct download URLs
     const downloadUrl = convertToDownloadUrl(attachment.url);
@@ -226,6 +234,36 @@ function sanitizeFilename(filename, url = "") {
     || "unnamed_file";
   
   return sanitizedName + ext;
+}
+
+// =============================================================================
+// STORAGE UTILITIES
+// =============================================================================
+
+/**
+ * Get the current download path from storage
+ * @returns {Promise<string>} - Download path
+ */
+function getDownloadPath() {
+  return new Promise((resolve) => {
+    chrome.storage.sync.get({ downloadPath: "Classroom" }, (result) => {
+      resolve(result.downloadPath || "Classroom");
+    });
+  });
+}
+
+/**
+ * Set the download path in storage
+ * @param {string} path - New download path
+ * @returns {Promise<void>}
+ */
+function setDownloadPath(path) {
+  return new Promise((resolve) => {
+    chrome.storage.sync.set({ downloadPath: path }, () => {
+      console.log(`[ilovegcr] Download path updated to: ${path}`);
+      resolve();
+    });
+  });
 }
 
 // =============================================================================
