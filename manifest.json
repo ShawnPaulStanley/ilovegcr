@@ -9,36 +9,25 @@
     "scripting",
     "activeTab",
     "storage",
-    "webRequest"
+    "webRequest",
+    "cookies"
   ],
   
   "host_permissions": [
     "https://classroom.google.com/*",
     "https://drive.google.com/*",
-    "https://docs.google.com/*"
+    "https://drive.usercontent.google.com/*",
+    "https://docs.google.com/*",
+    "https://*.googleusercontent.com/*"
   ],
   
   "background": {
-    "service_worker": "background.js",
-    "type": "module"
+    "service_worker": "background.js"
   },
   
   "action": {
     "default_popup": "popup.html",
-    "default_title": "iloveGCR - Classroom Downloader",
-    "default_icon": {
-      "16": "icon128.png",
-      "32": "icon128.png",
-      "48": "icon128.png",
-      "128": "icon128.png"
-    }
-  },
-  
-  "icons": {
-    "16": "icon128.png",
-    "32": "icon128.png",
-    "48": "icon128.png",
-    "128": "icon128.png"
+    "default_title": "iloveGCR - Classroom Downloader"
   },
   
   "content_scripts": [

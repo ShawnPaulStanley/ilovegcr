@@ -6,6 +6,9 @@
  * 2. Respond to popup requests for file list
  */
 
+// Browser API compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
@@ -22,21 +25,31 @@ const VALID_EXTENSIONS = [
 // MESSAGE LISTENER - Respond to popup requests
 // =============================================================================
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "SCAN_FILES") {
     console.log("[Classroom Downloader] Scanning for files...");
     
-    const files = scanForFiles();
-    const assignmentName = getAssignmentName();
-    
-    console.log("[Classroom Downloader] Found files:", files);
-    console.log("[Classroom Downloader] Assignment name:", assignmentName);
-    
-    sendResponse({
-      success: true,
-      files: files,
-      assignmentName: assignmentName
-    });
+    try {
+      const files = scanForFiles();
+      const assignmentName = getAssignmentName();
+      
+      console.log("[Classroom Downloader] Found files:", files);
+      console.log("[Classroom Downloader] Assignment name:", assignmentName);
+      
+      sendResponse({
+        success: true,
+        files: files,
+        assignmentName: assignmentName
+      });
+    } catch (error) {
+      console.error("[Classroom Downloader] Error scanning files:", error);
+      sendResponse({
+        success: false,
+        error: error.message,
+        files: [],
+        assignmentName: "Classroom_Download"
+      });
+    }
   }
   return true;
 });

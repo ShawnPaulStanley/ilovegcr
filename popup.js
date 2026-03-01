@@ -14,9 +14,12 @@ const VALID_EXTENSIONS = [
 let detectedFiles = [];
 let assignmentName = "";
 
+// Browser API compatibility
+const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
+
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await browserAPI.tabs.query({ active: true, currentWindow: true });
   
   // Check if on Classroom
   if (!tab.url || !tab.url.includes('classroom.google.com')) {
@@ -50,7 +53,7 @@ async function scanForFiles(tabId) {
   showLoading();
   
   try {
-    const response = await chrome.tabs.sendMessage(tabId, { action: "SCAN_FILES" });
+    const response = await browserAPI.tabs.sendMessage(tabId, { action: "SCAN_FILES" });
     
     if (response && response.success) {
       detectedFiles = response.files || [];
@@ -71,8 +74,29 @@ async function scanForFiles(tabId) {
       showEmpty();
     }
   } catch (error) {
-    console.error("Error scanning files:", error);
-    showEmpty();
+    console.error("[ilovegcr] Error scanning files:", error);
+    console.error("[ilovegcr] Error details:", error.message);
+    console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Scanning error occurred");
+    // Try to inject content script if it's not loaded
+    try {
+      console.log("[ilovegcr] Attempting to inject content script...");
+      if (browserAPI.scripting && browserAPI.scripting.executeScript) {
+        await browserAPI.scripting.executeScript({
+          target: { tabId: tabId },
+          files: ['content.js']
+        });
+        console.log("[ilovegcr] Content script injected, retrying scan...");
+        // Wait a bit for script to initialize
+        setTimeout(() => scanForFiles(tabId), 500);
+      } else {
+        console.warn("[ilovegcr] Browser does not support dynamic script injection");
+        showEmpty();
+      }
+    } catch (injectError) {
+      console.error("[ilovegcr] Failed to inject content script:", injectError);
+      console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Content script injection failed");
+      showEmpty();
+    }
   }
 }
 
@@ -264,7 +288,8 @@ async function downloadSelected() {
   btn.textContent = 'Downloading...';
   
   try {
-    const response = await chrome.runtime.sendMessage({
+    console.log("[ilovegcr] Starting download of", filesToDownload.length, "files");
+    const response = await browserAPI.runtime.sendMessage({
       action: "DOWNLOAD_ATTACHMENTS",
       attachments: filesToDownload,
       assignmentName: assignmentName
@@ -272,11 +297,22 @@ async function downloadSelected() {
     
     if (response.success) {
       const successCount = response.results.filter(r => r.success).length;
+      const failedCount = filesToDownload.length - successCount;
+      console.log(`[ilovegcr] Download complete: ${successCount} succeeded, ${failedCount} failed`);
+      if (failedCount > 0) {
+        console.error("[ilovegcr] Failed downloads:", response.results.filter(r => !r.success));
+        console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Some downloads failed");
+      }
       updateStatus(`Downloaded ${successCount}/${filesToDownload.length} files successfully`, 'success');
     } else {
+      console.error("[ilovegcr] Download failed:", response.error);
+      console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Download error");
       updateStatus(`Download failed: ${response.error}`, 'error');
     }
   } catch (error) {
+    console.error("[ilovegcr] Download error:", error);
+    console.error("[ilovegcr] Error stack:", error.stack);
+    console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Download exception");
     updateStatus(`Error: ${error.message}`, 'error');
   }
   
@@ -288,7 +324,7 @@ async function downloadSelected() {
  * Refresh the current page
  */
 function refreshPage(tabId) {
-  chrome.tabs.reload(tabId);
+  browserAPI.tabs.reload(tabId);
   window.close();
 }
 
@@ -305,13 +341,15 @@ function escapeHtml(text) {
  */
 async function loadDownloadPath() {
   try {
-    const response = await chrome.runtime.sendMessage({ action: "GET_DOWNLOAD_PATH" });
+    const response = await browserAPI.runtime.sendMessage({ action: "GET_DOWNLOAD_PATH" });
     const pathInput = document.getElementById('downloadPath');
     if (pathInput) {
-      pathInput.value = response.path || "Classroom";
+      pathInput.value = response.path || "Downloads";
+      console.log("[ilovegcr] Loaded download path:", response.path);
     }
   } catch (error) {
-    console.error("Error loading download path:", error);
+    console.error("[ilovegcr] Error loading download path:", error);
+    console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Path loading error");
   }
 }
 
@@ -330,17 +368,20 @@ async function saveDownloadPath() {
   }
   
   try {
-    await chrome.runtime.sendMessage({ 
+    console.log("[ilovegcr] Saving download path:", newPath);
+    await browserAPI.runtime.sendMessage({ 
       action: "SET_DOWNLOAD_PATH", 
       path: newPath 
     });
+    console.log("[ilovegcr] Path saved successfully");
     statusDiv.textContent = "✓ Path saved successfully";
     statusDiv.style.color = "#137333";
     setTimeout(() => {
       statusDiv.textContent = "";
     }, 3000);
   } catch (error) {
-    console.error("Error saving download path:", error);
+    console.error("[ilovegcr] Error saving download path:", error);
+    console.error("[ilovegcr] CHECK CONSOLE FOR DETAILS - Path save error");
     statusDiv.textContent = "Error saving path";
     statusDiv.style.color = "#c5221f";
   }
