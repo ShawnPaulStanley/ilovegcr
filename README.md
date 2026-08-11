@@ -47,7 +47,7 @@ google-classroom-downloader/
 ├── content.js         # Page scanning script
 ├── popup.html         # Extension popup UI
 ├── popup.js           # Popup logic
-├── icon128.png        # Extension icon
+├── image.png          # Extension and popup logo
 └── README.md
 ```
 
