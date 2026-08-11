@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "iloveGCR",
+  "version": "1.0.0",
+  "description": "Download attachments from Google Classroom with a clean popup UI.",
+  "permissions": ["storage", "downloads", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://classroom.google.com/*",
+    "https://drive.google.com/*",
+    "https://docs.google.com/*",
+    "https://drive.usercontent.google.com/*"
+  ],
+  "background": {
+    "service_worker": "balls.js"
+  },
+  "icons": {
+    "16": "image.png",
+    "32": "image.png",
+    "48": "image.png",
+    "128": "image.png"
+  },
+  "action": {
+    "default_title": "iloveGCR",
+    "default_icon": {
+      "16": "image.png",
+      "32": "image.png",
+      "48": "image.png",
+      "128": "image.png"
+    },
+    "default_popup": "popup.html"
+  }
+}
